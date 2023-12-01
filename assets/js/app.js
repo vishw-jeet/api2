@@ -72,17 +72,33 @@ const onEditBtn=(ele)=>{
 }
 const onUpdatePost=(eve)=>{
     let updatedObj={
-        
+        title:titleContainer.value,
+        body:bodyContainer.value,
+        userId:userIdContainer.value
     }
+    cl(updatedObj);
     let updatedId=localStorage.getItem("editedId");
     let updateUrl=`${postUrl}/${updatedId}`;
     
-    junricApi("PATCH",updateUrl);
+    junricApi("PUT",updateUrl,updatedObj);
 }
-const junricApi=((methodName,apiUrl)=>{
+
+const onDeleteBtn=(eve)=>{
+    let deleteId=eve.closest('.card').id;
+    cl(deleteId);
+    localStorage.setItem('deletedId',deleteId);
+
+    let deleteUrl=`${postUrl}/${deleteId}`;
+    cl(deleteUrl);
+    // let deletecard=document.getElementById(deleteId);
+    junricApi("DELETE",deleteUrl)
+    // deletecard.remove();
+}
+
+const junricApi=((methodName,apiUrl,bodymsg=null)=>{
     let xhr= new XMLHttpRequest();
     xhr.open(methodName,apiUrl,true);
-    xhr.send()
+    xhr.send(JSON.stringify(bodymsg))
     xhr.onload=()=>{
         if(xhr.status>=200 ||xhr.status<=299 && xhr.readyState === 4){
             let data=JSON.parse(xhr.response);
@@ -95,11 +111,27 @@ const junricApi=((methodName,apiUrl)=>{
                     bodyContainer.value= data.body,
                     userIdContainer.value= data.userId
                 }
-            }else if(methodName==="PATCH"){
-                let updatedId=localStorage.getItem("editedId");
+            }else if(methodName==="PUT"){
+                let updatedId=JSON.parse(xhr.response).id;
+                let updatecard=document.getElementById(updatedId);
+                // cl(updatecard)
+                let cardchilds=[...updatecard.children];
+                cl(cardchilds)
+                cardchilds[0].innerHTML=`<h2>${bodymsg.title}</h2>`;
+                cardchilds[1].innerHTML=`<p>${bodymsg.body}</p>`
 
-               
-        }
+                formContainer.reset();
+                UpdateBtn.classList.add('d-none');
+                AddBtn.classList.remove('d-none');
+             }else if(methodName=== "DELETE"){
+                let getIndex=apiUrl.indexOf('posts/'); //get index by using url and indexOf method
+               let id=apiUrl.slice(getIndex + 6);
+               cl(id)
+                document.getElementById(id).remove()
+                // let deletId=localStorage.getItem('deletedId');
+                // let deletecard=document.getElementById(deletId);
+                // deletecard.remove();
+             }
     }
     
 }})
